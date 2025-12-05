@@ -16,6 +16,12 @@ func TestGitLogFixtures(t *testing.T) {
 	matches, err := filepath.Glob("../fixtures/**/git-log*.out")
 	require.NoError(t, err)
 
+	// For jc tests involving local epoch timestamps, we need to fix the timezone
+	// jc Docs: The naive fields (epoch timestamps) are based on the local time of the system the parser is run on.
+	// jc Tests are based on America/Los_Angeles timezone. I set it here to ensure consistent test results
+	// with GitHub actions and other environments, like my own in Europe/Zurich
+	os.Setenv("TZ", "America/Los_Angeles")
+
 	for _, outPath := range matches {
 		t.Run(outPath, func(t *testing.T) {
 			input, err := os.ReadFile(outPath)

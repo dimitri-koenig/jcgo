@@ -144,14 +144,18 @@ func parseGitLog(data []byte) ([]GitLogEntry, error) {
 				current.Date = strings.TrimPrefix(line, "Date: ")
 			}
 
+			// time.Unix() returns seconds since epoch in UTC
+			// But in jc it's different, according to jc's docs:
+			// The naive fields (epoch timestamps) are based on the local time of the system the parser is run on.
+			// So we need quite some gymnastics here to get the correct local epoch time.
+
 			current.Date = strings.TrimSpace(current.Date)
 
 			timeWithTimezone := parseGitDate(current.Date)
 			timeWithoutTimezone := parseGitDateWithoutTimezone(current.Date)
 
 			if !timeWithTimezone.IsZero() && !timeWithoutTimezone.IsZero() {
-				loc, _ := time.LoadLocation("America/Los_Angeles")
-				_, offsetSeconds := timeWithTimezone.In(loc).Zone()
+				_, offsetSeconds := timeWithTimezone.In(time.Local).Zone()
 
 				finalUnix := timeWithoutTimezone.Unix() - int64(offsetSeconds)
 
